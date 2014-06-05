@@ -1,0 +1,152 @@
+import groovy.swing.SwingBuilder
+
+buildscript {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.10+'
+    }
+}
+
+allprojects {
+    apply plugin: "eclipse"
+    apply plugin: "idea"
+
+    version = '1.0'
+    ext {
+        appName = 'signing-example'
+        gdxVersion = '1.1.0'
+        roboVMVersion = '0.0.13'
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven { url "https://oss.sonatype.org/content/repositories/releases/" }
+    }
+}
+
+project(":desktop") {
+    apply plugin: "java"
+
+
+    dependencies {
+        compile project(":core")
+        compile "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
+        compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+        compile "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
+    }
+}
+
+project(":android") {
+    apply plugin: "android"
+
+    configurations { natives }
+
+    dependencies {
+        compile project(":core")
+        compile "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
+        natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi"
+        natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
+        natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86"
+        compile "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
+        natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-armeabi"
+        natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-armeabi-v7a"
+        natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-x86"
+    }
+
+    android {
+        signingConfigs {
+            releaseSigning {
+                storeFile file("willBeReplaced")
+                storePassword ""
+                keyAlias ""
+                keyPassword ""
+            }
+        }
+        buildTypes {
+            release {
+                signingConfig signingConfigs.releaseSigning
+            }
+        }
+    }
+}
+
+project(":core") {
+    apply plugin: "java"
+
+
+    dependencies {
+        compile "com.badlogicgames.gdx:gdx:$gdxVersion"
+        compile "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
+    }
+}
+
+tasks.eclipse.doLast {
+    delete ".project"
+}
+
+gradle.taskGraph.whenReady { taskGraph ->
+    if(taskGraph.hasTask(':android:assembleRelease')) {
+        def _store = ''
+        def _storePassword = ''
+        def _keyPassword = ''
+        def _keyAlias = ''
+        if(System.console() == null) {
+            new SwingBuilder().edt {
+                def inputStore
+                def inputStorePass
+                def inputKey
+                def inputKeyPass
+                dialog(modal: true,
+                        title: 'Key Store',
+                        alwaysOnTop: true,
+                        resizable: false,
+                        locationRelativeTo: null,
+                        pack: true,
+                        show: true
+                ) {
+                    vbox {
+                        label(text: "Key store:")
+                        inputStore = textField(text: "myKeyStore.keystore")
+                        label(text: "Key store password:")
+                        inputStorePass = passwordField()
+                        label(text: "Key alias:")
+                        inputKey = textField(text: "myAlias")
+                        label(text: "Key password:")
+                        inputKeyPass = passwordField()
+                        button(defaultButton: true, text: 'OK', actionPerformed: {
+                            _store = inputStore.text
+                            _storePassword =  new String(inputStorePass.password);
+                            _keyAlias =  inputKey.text
+                            _keyPassword =  new String(inputKeyPass.password)
+                            dispose();
+                        })
+                    }
+                }
+            }
+        } else {
+            _store = System.console().readLine("\nLocation of the key store: ")
+            _storePassword = System.console().readPassword("\nKey store password: ")
+            _storePassword = new String(_storePassword)
+            _keyAlias = System.console().readLine("\nKey alias: ")
+            _keyPassword = System.console().readPassword("\nKey password: ")
+            _keyPassword = new String(_keyPassword)
+        }
+        if(_storePassword.size() <= 0 || _keyPassword.size() <= 0 ||
+                _store.size() <= 0 || _keyAlias.size() <= 0) {
+            throw new InvalidUserDataException("You must enter a key store password and key password.")
+        }
+        if(!file(_store).exists()){
+            throw new InvalidUserDataException("Could not find key store ["+_store+"]")
+        }
+        //set signing values to android project
+        project("android").android.signingConfigs.releaseSigning.storeFile = file(_store)
+        project("android").android.signingConfigs.releaseSigning.storePassword = _storePassword
+        project("android").android.signingConfigs.releaseSigning.keyAlias = _keyAlias
+        project("android").android.signingConfigs.releaseSigning.keyPassword = _keyPassword
+    }
+}
