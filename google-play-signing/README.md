@@ -1,0 +1,1 @@
+A sample code from [Publishing your libGDX 1.1+ application to Google Play Store post](http://andresaraujo.github.io/2014/06/05/publish-libgdx-1.1-google-play/)
