@@ -41,6 +41,14 @@ project(":desktop") {
     }
 }
 
+project(":BaseGameUtils") {
+    apply plugin: "android-library"
+
+    dependencies {
+        compile 'com.google.android.gms:play-services:4.4.52'
+    }
+}
+
 project(":android") {
     apply plugin: "android"
 
@@ -48,6 +56,7 @@ project(":android") {
 
     dependencies {
         compile project(":core")
+        compile project(":BaseGameUtils")
         compile "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
         natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi"
         natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
