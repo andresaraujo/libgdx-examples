@@ -9,6 +9,10 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 public class MyGdxGame extends ApplicationAdapter {
 	SpriteBatch batch;
 	Texture img;
+    GameService gs;
+    public MyGdxGame(GameService gs){
+      this.gs = gs;
+    }
 	
 	@Override
 	public void create () {

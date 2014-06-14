@@ -70,7 +70,7 @@ project(":android") {
     android {
         signingConfigs {
             releaseSigning {
-                storeFile file("willBeReplaced")
+                storeFile file("willbeRemplaced.keystore")
                 storePassword ""
                 keyAlias ""
                 keyPassword ""
@@ -120,9 +120,9 @@ gradle.taskGraph.whenReady { taskGraph ->
                 ) {
                     vbox {
                         label(text: "Key store:")
-                        inputStore = textField(text: "myKeyStore.keystore")
+                        inputStore = textField(text: "android/myReleaseKey.keystore")
                         label(text: "Key store password:")
-                        inputStorePass = passwordField()
+                        inputStorePass = passwordField()//gpgs123
                         label(text: "Key alias:")
                         inputKey = textField(text: "myAlias")
                         label(text: "Key password:")
